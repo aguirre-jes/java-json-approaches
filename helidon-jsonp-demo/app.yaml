@@ -1,0 +1,37 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: helidon-jsonp-demo
+  labels:
+    app: helidon-jsonp-demo
+spec:
+  type: ClusterIP
+  selector:
+    app: helidon-jsonp-demo
+  ports:
+    - name: tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: helidon-jsonp-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helidon-jsonp-demo
+  template:
+    metadata:
+      labels:
+        app: helidon-jsonp-demo
+        version: v1
+    spec:
+      containers:
+      - name: helidon-jsonp-demo
+        image: helidon-jsonp-demo
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080

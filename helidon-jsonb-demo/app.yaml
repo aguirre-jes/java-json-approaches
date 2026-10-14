@@ -1,0 +1,37 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: helidon-jsonb-demo
+  labels:
+    app: helidon-jsonb-demo
+spec:
+  type: ClusterIP
+  selector:
+    app: helidon-jsonb-demo
+  ports:
+    - name: tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: helidon-jsonb-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helidon-jsonb-demo
+  template:
+    metadata:
+      labels:
+        app: helidon-jsonb-demo
+        version: v1
+    spec:
+      containers:
+      - name: helidon-jsonb-demo
+        image: helidon-jsonb-demo
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
