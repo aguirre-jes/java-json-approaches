@@ -41,7 +41,7 @@ public class Main {
                 .start();
 
 
-        System.out.println("JSON-P server is up! http://localhost:" + server.port() + "/customers/42");
+        System.out.println("JSON-P server is up! http://localhost:" + server.port() + "/person");
 
     }
 
@@ -50,6 +50,6 @@ public class Main {
      * Updates HTTP Routing.
      */
     static void routing(HttpRouting.Builder routing) {
-        routing.register("/customers", new CustomerService());
+        routing.register("/person", new PersonService());
     }
 }

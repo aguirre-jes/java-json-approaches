@@ -7,8 +7,9 @@ import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
-import java.io.StringReader;
 import org.junit.jupiter.api.Test;
+
+import java.io.StringReader;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -26,12 +27,13 @@ abstract class AbstractMainTest {
     }
 
     @Test
-    void returnsCustomerAsJson() {
-        ClientResponseTyped<String> response = client.get("/customers/42").request(String.class);
-        JsonObject customer = Json.createReader(new StringReader(response.entity())).readObject();
+    void returnsPersonAsJson() {
+        ClientResponseTyped<String> response = client.get("/person").request(String.class);
+        JsonObject person = Json.createReader(new StringReader(response.entity())).readObject();
 
         assertThat(response.status(), is(Status.OK_200));
-        assertThat(customer.getInt("id"), is(42));
-        assertThat(customer.getString("name"), is("Jordan Lee"));
+        assertThat(person.getString("name"), is("Jesus"));
+        assertThat(person.getInt("age"), is(31));
+        assertThat(person.getString("birthDate"), is("1995-05-10"));
     }
 }

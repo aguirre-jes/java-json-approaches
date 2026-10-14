@@ -1,12 +1,12 @@
 package io.helidon.examples.jackson;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.helidon.http.Status;
 import io.helidon.webclient.api.ClientResponseTyped;
 import io.helidon.webclient.http1.Http1Client;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,12 +25,13 @@ abstract class AbstractMainTest {
     }
 
     @Test
-    void returnsCustomerAsJson() throws Exception {
-        ClientResponseTyped<String> response = client.get("/customers/42").request(String.class);
-        JsonNode customer = new ObjectMapper().readTree(response.entity());
+    void returnsPersonAsJson() throws Exception {
+        ClientResponseTyped<String> response = client.get("/person").request(String.class);
+        JsonNode person = new ObjectMapper().readTree(response.entity());
 
         assertThat(response.status(), is(Status.OK_200));
-        assertThat(customer.get("id").intValue(), is(42));
-        assertThat(customer.get("name").textValue(), is("Jordan Lee"));
+        assertThat(person.get("name").textValue(), is("Jesus"));
+        assertThat(person.get("age").intValue(), is(31));
+        assertThat(person.get("birthDate").toString(), is("[1995,5,10]"));
     }
 }

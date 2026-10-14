@@ -106,29 +106,33 @@ example directory.
 
 ## 5. Shared Example Contract
 
-Each project should expose the same simple endpoint:
+Each project should expose the same simple endpoints:
 
 ``` http
-GET /customers/42
+GET /person
+POST /person
 Accept: application/json
 ```
 
-Use a small domain model with these fields:
+Use the same small domain model with these fields:
 
--   `id`: integer or long value
 -   `name`: string value
+-   `age`: integer value
+-   `birthDate`: ISO date represented by `LocalDate`
 
-The expected response body should be semantically equivalent to:
+The expected person response should contain the same sample values:
 
 ``` json
 {
-  "id": 42,
-  "name": "Jordan Lee"
+  "name": "Jesus",
+  "age": 31,
+  "birthDate": "1995-05-10"
 }
 ```
 
-Use the same sample values in all three projects. The example name is
-intentionally fictional.
+Use the same sample values in all three projects where the underlying
+technology produces the same representation. The Jackson example documents
+its provider-specific `LocalDate` representation.
 
 Requirements:
 
@@ -138,7 +142,7 @@ Requirements:
     types.
 -   Do not require a database, external API, credentials, containers, or
     cloud services.
--   Keep the endpoint and domain behavior minimal so the JSON approach
+-   Keep the endpoints and domain behavior minimal so the JSON approach
     remains the focus.
 -   If a framework requires a different endpoint declaration or response
     type for a particular JSON API, preserve the response contract and
@@ -150,11 +154,11 @@ Requirements:
 
 Demonstrate JSON-B's object-binding model.
 
--   Define a Java customer type, preferably a record if supported by the
+-   Define a Java `Person` type, preferably a record if supported by the
     selected Java baseline and JSON-B provider; otherwise use a simple
     POJO.
 -   Use the Jakarta JSON Binding API and a compatible provider.
--   Return a Java customer object from the endpoint where the selected
+-   Return a Java person object from the endpoint where the selected
     Helidon integration supports this behavior.
 -   Verify which provider actually serializes the response; do not infer
     this only from the presence of an API dependency.
@@ -174,7 +178,7 @@ presenting JSON-P as a drop-in POJO-binding equivalent.
 
 -   Use the Jakarta JSON Processing API and a compatible
     implementation/provider.
--   Build the customer response using JSON-P facilities such as
+-   Build the person response using JSON-P facilities such as
     `JsonObjectBuilder`.
 -   Return or write the resulting JSON through a supported Helidon
     response mechanism.
@@ -183,7 +187,7 @@ presenting JSON-P as a drop-in POJO-binding equivalent.
 
 Explain in `json-p/README.md`: - What JSON-P is and what problem it
 solves. - Why this example constructs a JSON structure explicitly rather
-than returning a customer POJO. - How the JSON structure is turned into
+than returning a person POJO. - How the JSON structure is turned into
 an HTTP response. - The difference between constructing JSON directly
 and binding Java objects to JSON. - How to run and validate the example.
 
@@ -193,9 +197,9 @@ Demonstrate Jackson's object-binding model.
 
 -   Use a compatible, explicitly versioned Jackson setup supported by
     the selected Helidon integration.
--   Define the same customer data shape and values used in the other
+-   Define the same person data shape and values used in the other
     projects.
--   Return a Java customer object where the selected integration
+-   Return a Java person object where the selected integration
     supports this behavior.
 -   Verify which Jackson components and framework integration perform
     serialization.

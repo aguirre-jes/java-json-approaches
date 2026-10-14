@@ -1,74 +1,139 @@
-# Java JSON layer demos
+# Java JSON approaches
 
-Three independent Helidon SE projects show the same HTTP response using
-three different abstractions:
+This repository contains three independent Helidon SE 27.0.0 applications
+that expose the same small REST example:
 
-- [`helidon-jsonb-demo`](./helidon-jsonb-demo): JSON-B binds a Java
-  `Customer` object to JSON through `helidon-http-media-jsonb`.
-- [`helidon-jsonp-demo`](./helidon-jsonp-demo): JSON-P explicitly builds a
-  `JsonObject` through `JsonObjectBuilder`.
-- [`helidon-jackson-demo`](./helidon-jackson-demo): Jackson binds the
-  `Customer` record through `helidon-http-media-jackson`.
-
-The client always receives `GET /customers/42` with `200 OK` and:
-
-```json
-{"id":42,"name":"Jordan Lee"}
+```text
+GET  /person
+POST /person
 ```
 
-The response can be identical, but the abstraction level is not: JSON-B and
-Jackson work with objects, while JSON-P works directly with a JSON structure.
-Helidon WebServer and its HTTP Media modules produce the HTTP body and
-`Content-Type`.
+Each application uses the same Java record:
+
+```java
+public record Person(String name, int age, LocalDate birthDate) {}
+```
+
+The sample person is `Jesus`, age `31`, born on `1995-05-10`. The purpose is
+not to benchmark libraries or declare a universal winner. It is to make the
+JSON layer visible: the Java endpoint can look nearly identical while the
+JSON representation and mapping responsibility change.
+
+## The three approaches
+
+### JSON-P: direct JSON processing
+
+JSON-P works with JSON structures. The JSON-P service explicitly creates a
+`JsonObject` with `Json.createObjectBuilder()`. For `POST /person`, it reads
+each field, parses `birthDate` with `LocalDate.parse`, creates the Java record,
+and builds the response object again.
+
+The mental model is:
+
+```text
+Java values -> JSON structure
+```
+
+### JSON-B: standard object binding
+
+JSON-B is the Jakarta standard for binding Java objects to and from JSON. The
+JSON-B service can simply read `Person.class` from the request and send the
+resulting `Person` object. In this project, Helidon's JSON-B HTTP Media
+integration uses the Jakarta JSON-B provider (Eclipse Yasson transitively).
+
+The mental model is:
+
+```text
+Java object <-> JSON
+```
+
+### Jackson: object binding in its own ecosystem
+
+Jackson also maps Java objects to and from JSON, but it is a separate
+ecosystem with its own modules and configuration. Helidon's Jackson HTTP Media
+integration uses Jackson Databind and its Java time support.
+
+The application code can look like JSON-B:
+
+```java
+Person person = request.content().as(Person.class);
+response.send(person);
+```
+
+The provider still makes its own representation decisions. With the current
+Helidon configuration, JSON-B and JSON-P represent `LocalDate` as
+`"1995-05-10"`, while Jackson represents it as `[1995,5,10]`.
+
+## Repository map
+
+- [`helidon-jsonb-demo`](./helidon-jsonb-demo): Jakarta JSON-B binding.
+- [`helidon-jsonp-demo`](./helidon-jsonp-demo): explicit JSON-P processing.
+- [`helidon-jackson-demo`](./helidon-jackson-demo): Jackson object binding.
+
+Each directory is a standalone Maven project. The projects share Helidon and
+the Java baseline, but they do not depend on one another.
 
 ## Requirements and versions
 
 - Java 27
 - Maven 3.9+
 - Helidon 27.0.0
-- Jakarta JSON-B/JSON-P and providers managed by Helidon 27.0.0
-- Jackson managed by Helidon 27.0.0
+- Jakarta JSON-B and provider managed by Helidon
+- Jakarta JSON-P and provider managed by Helidon
+- Jackson Databind and Helidon Jackson HTTP Media
 
 No database, credentials, container, or external service is required.
 
-## Run and validate
+## Run an example
 
-From each project directory:
+From the selected project directory:
 
 ```bash
-cd helidon-jsonb-demo && mvn test && java -jar target/helidon-jsonb-demo.jar
-cd ../helidon-jsonp-demo && mvn test && java -jar target/helidon-jsonp-demo.jar
-cd ../helidon-jackson-demo && mvn test && java -jar target/helidon-jackson-demo.jar
+cd helidon-jsonb-demo
+mvn test
+java -jar target/helidon-jsonb-demo.jar
 ```
+
+Use the equivalent commands for `helidon-jsonp-demo` or
+`helidon-jackson-demo`.
 
 In another terminal:
 
 ```bash
-curl -i -H 'Accept: application/json' http://localhost:8080/customers/42
+curl -i http://localhost:8080/person
+curl -i -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Jesus","age":31,"birthDate":"1995-05-10"}' \
+  http://localhost:8080/person
 ```
 
-The `Content-Type` must be JSON and the body must contain numeric `id` `42`
-and `name` with value `"Jordan Lee"`. Each project also includes an HTTP test
-that can be run with `mvn test`.
+The GET and POST responses are semantically equivalent within each project.
+The `Content-Type` is `application/json`; the `LocalDate` representation is
+the intentional provider-specific difference described above.
 
-## Comparison
+## What the framework does
 
-| Project | Model | Response production | Note |
-| --- | --- | --- | --- |
-| JSON-B | Object binding ↔ JSON | Helidon JSON-B media serializes `Customer` | Jakarta API + provider |
-| JSON-P | JSON structure | The service creates a `JsonObject` and Helidon writes it | No POJO binding |
-| Jackson | Object binding ↔ JSON | Helidon Jackson media serializes `Customer` | Jackson ecosystem |
+The endpoint does not write directly to a socket. Helidon WebServer routes the
+request, and the matching HTTP Media integration connects the response to the
+selected JSON technology:
 
-This is not a benchmark and does not attempt to declare a winner. These are
-reproducible examples for the associated Medium article and for observing the
-actual Helidon integration.
+```text
+HTTP endpoint -> Helidon HTTP Media -> JSON-P / JSON-B / Jackson
+```
 
-## Limitations
+Adding only a JSON API dependency does not configure HTTP serialization by
+itself. The relevant `helidon-http-media-*` dependency is part of each
+project's integration.
 
-The `helidon-http-media-*` modules connect each API to the HTTP layer. Adding
-only a JSON dependency does not configure response serialization by itself.
-JSON-P requires explicitly building the structure; JSON-B and Jackson allow
-the service to return the object.
+## Limitations and architectural lesson
+
+The examples intentionally use one `LocalDate` field because it reveals a
+decision hidden by object binding. JSON-P keeps the conversion visible in the
+service. JSON-B and Jackson remove that mapping code from the application, but
+the decision still exists in their providers and configuration.
+
+That is why changing a JSON technology can affect serialization behavior,
+deserialization behavior, tests, configuration, and public API compatibility.
 
 ## References
 
